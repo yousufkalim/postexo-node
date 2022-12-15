@@ -1,0 +1,281 @@
+const Session = require('../models/Session');
+const User = require('../models/User');
+
+// Get ALL Sessions of a user
+exports.getAllSessionsByUser = async (req, res) => {
+  const { userId } = req.params;
+  const queryParams = req.query;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    const queryFilters = { student_name: user?.name, ...queryParams };
+    const allSessions = await Session.find(queryFilters).populate('comments.user');
+    res.status(200).json({ sessions: allSessions });
+  } catch (err) {
+    res.status(400).json({ message: 'Something went wrong' });
+  }
+};
+
+// Get a session by session Id
+exports.getSessionById = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const session = await Session.findById(sessionId).populate('comments.user');
+
+    res.status(200).json({ session: session });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Add Comment to session
+exports.addCommentToSession = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    await Session.findOneAndUpdate(
+      { _id: sessionId },
+      {
+        $push: { comments: { comment: req.body.comment, user: req.body.userId } },
+      },
+      {
+        new: true,
+      },
+    );
+    res.status(200).json({ message: 'Comment added successfully' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Add Like to session
+exports.likeSession = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    await Session.findOneAndUpdate(
+      { _id: sessionId },
+      {
+        $addToSet: { likes: req.body.userId },
+        $pull: { dislikes: req.body.userId },
+      },
+      {
+        new: true,
+      },
+    );
+    res.status(200).json({ message: 'Comment added successfully' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Add Dislike to session
+exports.dislikeSession = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    await Session.findOneAndUpdate(
+      { _id: sessionId },
+      {
+        $addToSet: { dislikes: req.body.userId },
+        $pull: { likes: req.body.userId },
+      },
+      {
+        new: true,
+      },
+    );
+    res.status(200).json({ message: 'Comment added successfully' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Add View to session
+exports.addViewToSession = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    await Session.findOneAndUpdate(
+      { _id: sessionId },
+      {
+        $addToSet: { views: req.body.userId },
+      },
+      {
+        new: true,
+      },
+    );
+    res.status(200).json({ message: 'Comment added successfully' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Add View to session
+exports.shareSession = async (req, res) => {
+  const { sessionId } = req.params;
+
+  try {
+    const { userId } = req.body;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const session = await Session.findById(sessionId);
+    await Session.findOneAndUpdate(
+      { _id: sessionId },
+      {
+        shares: session.shares + 1,
+      },
+      {
+        new: true,
+      },
+    );
+    res.status(200).json({ message: 'Comment added successfully' });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+exports.actionOnSession = async (req, res) => {
+  const { sessionId } = req.params;
+  const { userId } = req.body;
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { like, dislike, comment, share, view, rate } = req.query;
+
+    if (like) {
+      await Session.findOneAndUpdate(
+        { _id: sessionId },
+        {
+          $addToSet: { likes: userId },
+          $pull: { dislikes: userId },
+        },
+        {
+          new: true,
+        },
+      );
+      res.status(200).json({ message: 'Session liked successfully' });
+    } else if (dislike) {
+      await Session.findOneAndUpdate(
+        { _id: sessionId },
+        {
+          $addToSet: { dislikes: userId },
+          $pull: { likes: userId },
+        },
+        {
+          new: true,
+        },
+      );
+      res.status(200).json({ message: 'Session disliked successfully' });
+    } else if (comment) {
+      await Session.findOneAndUpdate(
+        { _id: sessionId },
+        {
+          $push: { comments: { comment: req.body.comment, user: userId } },
+        },
+        {
+          new: true,
+        },
+      );
+      res.status(200).json({ message: 'Comment posted successfully' });
+    } else if (share) {
+      const session = await Session.findById(sessionId);
+      await Session.findOneAndUpdate(
+        { _id: sessionId },
+        {
+          shares: session.shares ? session.shares + 1 : 1,
+        },
+        {
+          new: true,
+        },
+      );
+      res.status(200).json({ message: 'Session shared successfully' });
+    } else if (view) {
+      await Session.findOneAndUpdate(
+        { _id: sessionId },
+        {
+          $addToSet: { views: req.body.userId },
+        },
+        {
+          new: true,
+        },
+      );
+      res.status(200).json({ message: 'Session viewed successfully' });
+    } else if (rate) {
+      const findSession = await Session.find({ _id: sessionId, 'ratings.user': userId });
+
+      if (findSession?.length) {
+        await Session.findOneAndUpdate(
+          {
+            _id: sessionId,
+            'ratings.user': userId,
+          },
+          {
+            $set: { 'ratings.$.rating': req.body.rating },
+          },
+          {
+            new: true,
+          },
+        );
+      } else {
+        await Session.findOneAndUpdate(
+          {
+            _id: sessionId,
+          },
+          {
+            $push: {
+              ratings: {
+                user: userId,
+                rating: req.body.rating,
+              },
+            },
+          },
+          {
+            new: true,
+          },
+        );
+      }
+      res.status(200).json({ message: 'Rate session successfully' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

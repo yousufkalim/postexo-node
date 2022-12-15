@@ -2,7 +2,7 @@
  * User auth controllers
  * @author Yousuf Kalim
  */
-const Users = require('../models/Users');
+const Users = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/sendEmail');

@@ -7,6 +7,7 @@ const app = require('express')();
 const port = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'dev';
 require('./database');
+require('./utils/scrapData');
 
 // Middleware
 require('./middleware/common')(app);
