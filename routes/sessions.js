@@ -1,5 +1,5 @@
 const {
-  getAllSessionsByUser,
+  getAllSessions,
   getSessionById,
   addCommentToSession,
   likeSession,
@@ -11,7 +11,7 @@ const {
 
 const router = require('express').Router();
 
-router.get('/getByUser/:userId', getAllSessionsByUser);
+router.get('/', getAllSessions);
 router.get('/:sessionId', getSessionById);
 router.post('/addComment/:sessionId', addCommentToSession);
 router.post('/like/:sessionId', likeSession);
