@@ -6,7 +6,12 @@ exports.getAllSessions = async (req, res) => {
   const queryParams = req.query;
   try {
     const queryFilters = { ...queryParams };
-    const allSessions = await Session.find(queryFilters).populate('comments.user');
+    const allSessions = await Session.find(queryFilters)
+      .populate('comments.user')
+      .populate('ratings.user')
+      .populate('likes')
+      .populate('dislikes')
+      .populate('views');
     res.status(200).json({ sessions: allSessions });
   } catch (err) {
     res.status(400).json({ message: 'Something went wrong' });
@@ -267,6 +272,30 @@ exports.actionOnSession = async (req, res) => {
             new: true,
           },
         );
+
+        const session = await Session.findById(sessionId);
+
+        let ratingSum = 0;
+        let avgRating = 0;
+        const ratingCount = session?.ratings?.length;
+        session.ratings?.forEach((item) => {
+          ratingSum = ratingSum + item.rating;
+        });
+        if (ratingCount) {
+          avgRating = ratingSum / ratingCount;
+        }
+
+        await Session.findOneAndUpdate(
+          { _id: sessionId },
+          {
+            averageRating: avgRating,
+          },
+          { new: true },
+        );
+
+        // session.findByIdAndUpdate(sessionId, {
+        //     averageRating:
+        // })
       }
       res.status(200).json({ message: 'Rate session successfully' });
     }
