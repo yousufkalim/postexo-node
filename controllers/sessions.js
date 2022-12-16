@@ -2,15 +2,10 @@ const Session = require('../models/Session');
 const User = require('../models/User');
 
 // Get ALL Sessions of a user
-exports.getAllSessionsByUser = async (req, res) => {
-  const { userId } = req.params;
+exports.getAllSessions = async (req, res) => {
   const queryParams = req.query;
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'Student not found' });
-    }
-    const queryFilters = { student_name: user?.name, ...queryParams };
+    const queryFilters = { ...queryParams };
     const allSessions = await Session.find(queryFilters).populate('comments.user');
     res.status(200).json({ sessions: allSessions });
   } catch (err) {
