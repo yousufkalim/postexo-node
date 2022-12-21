@@ -172,7 +172,7 @@ exports.shareSession = async (req, res) => {
 
 exports.actionOnSession = async (req, res) => {
   const { sessionId } = req.params;
-  const { userId } = req.body;
+  const { userId, flag } = req.body;
   try {
     const user = await User.findById(userId);
     if (!user) {
@@ -182,29 +182,55 @@ exports.actionOnSession = async (req, res) => {
     const { like, dislike, comment, share, view, rate } = req.query;
 
     if (like) {
-      await Session.findOneAndUpdate(
-        { _id: sessionId },
-        {
-          $addToSet: { likes: userId },
-          $pull: { dislikes: userId },
-        },
-        {
-          new: true,
-        },
-      );
-      res.status(200).json({ message: 'Session liked successfully' });
+      if (flag) {
+        await Session.findOneAndUpdate(
+          { _id: sessionId },
+          {
+            $addToSet: { likes: userId },
+            $pull: { dislikes: userId },
+          },
+          {
+            new: true,
+          },
+        );
+        res.status(200).json({ message: 'Session liked successfully' });
+      } else {
+        await Session.findOneAndUpdate(
+          { _id: sessionId },
+          {
+            $pull: { likes: userId },
+          },
+          {
+            new: true,
+          },
+        );
+        res.status(200).json({ message: 'Session liked removed successfully' });
+      }
     } else if (dislike) {
-      await Session.findOneAndUpdate(
-        { _id: sessionId },
-        {
-          $addToSet: { dislikes: userId },
-          $pull: { likes: userId },
-        },
-        {
-          new: true,
-        },
-      );
-      res.status(200).json({ message: 'Session disliked successfully' });
+      if (flag) {
+        await Session.findOneAndUpdate(
+          { _id: sessionId },
+          {
+            $addToSet: { dislikes: userId },
+            $pull: { likes: userId },
+          },
+          {
+            new: true,
+          },
+        );
+        res.status(200).json({ message: 'Session disliked successfully' });
+      } else {
+        await Session.findOneAndUpdate(
+          { _id: sessionId },
+          {
+            $pull: { dislikes: userId },
+          },
+          {
+            new: true,
+          },
+        );
+        res.status(200).json({ message: 'Session disliked removed successfully' });
+      }
     } else if (comment) {
       await Session.findOneAndUpdate(
         { _id: sessionId },
@@ -255,6 +281,24 @@ exports.actionOnSession = async (req, res) => {
             new: true,
           },
         );
+        const session = await Session.findById(sessionId);
+
+        let ratingSum = 0;
+        let avgRating = 0;
+        const ratingCount = session?.ratings?.length;
+        session.ratings?.forEach((item) => {
+          ratingSum = ratingSum + item.rating;
+        });
+        if (ratingCount) {
+          avgRating = (ratingSum / ratingCount)?.toFixed(1);
+        }
+        await Session.findOneAndUpdate(
+          { _id: sessionId },
+          {
+            averageRating: avgRating,
+          },
+          { new: true },
+        );
       } else {
         await Session.findOneAndUpdate(
           {
@@ -282,7 +326,7 @@ exports.actionOnSession = async (req, res) => {
           ratingSum = ratingSum + item.rating;
         });
         if (ratingCount) {
-          avgRating = ratingSum / ratingCount;
+          avgRating = (ratingSum / ratingCount)?.toFixed(1);
         }
 
         await Session.findOneAndUpdate(
