@@ -55,11 +55,16 @@ const sessionSchema = new Schema({
   matter: String,
   comments: [
     {
-      user: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-      },
-      comment: String,
+      type: new Schema(
+        {
+          user: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+          },
+          comment: String,
+        },
+        { timestamps: true },
+      ),
     },
   ],
   ratings: [
