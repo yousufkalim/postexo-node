@@ -18,9 +18,18 @@ const userSchema = new Schema({
     required: true,
     minlength: [8, 'Password length should be greater than 8 characters'],
   },
-  favorites: [String],
-  play_list: [String],
-  watch_later: [String],
+  favorites: {
+    type: [Schema.Types.ObjectId],
+    ref: 'User',
+  },
+  play_list: {
+    type: [Schema.Types.ObjectId],
+    ref: 'User',
+  },
+  watch_later: {
+    type: [Schema.Types.ObjectId],
+    ref: 'User',
+  },
 });
 
 const User = new model('User', userSchema);
