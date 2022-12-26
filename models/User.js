@@ -20,15 +20,15 @@ const userSchema = new Schema({
   },
   favorites: {
     type: [Schema.Types.ObjectId],
-    ref: 'User',
+    ref: 'Session',
   },
   play_list: {
     type: [Schema.Types.ObjectId],
-    ref: 'User',
+    ref: 'Playlist',
   },
   watch_later: {
     type: [Schema.Types.ObjectId],
-    ref: 'User',
+    ref: 'Session',
   },
 });
 

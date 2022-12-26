@@ -178,13 +178,14 @@ exports.shareSession = async (req, res) => {
 exports.favouriteSession = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { userId, isFavourite } = req.body;
+    const { userId } = req.body;
+    const isFavoriteExists = await User.find({ _id: userId, favorites: sessionId });
 
-    if (isFavourite) {
+    if (isFavoriteExists?.length) {
       const updateUser = await User.findOneAndUpdate(
         { _id: userId },
         {
-          $addToSet: { favorites: sessionId },
+          $pull: { favorites: sessionId },
         },
       );
       res
@@ -194,7 +195,7 @@ exports.favouriteSession = async (req, res) => {
       const updateUser = await User.findOneAndUpdate(
         { _id: userId },
         {
-          $pull: { favorites: sessionId },
+          $addToSet: { favorites: sessionId },
         },
       );
       res
