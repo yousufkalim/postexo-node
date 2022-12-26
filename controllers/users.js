@@ -61,7 +61,10 @@ exports.getAll = async (req, res) => {
 exports.getById = async (req, res) => {
   try {
     const userId = req.params.userId; // Getting user id from URL parameter
-    const user = await Users.findById(userId); // Finding user by id
+    const user = await Users.findById(userId)
+      .populate('favorites')
+      .populate('play_list')
+      .populate('watch_later'); // Finding user by id
     res.json({ success: true, user }); // Success
   } catch (err) {
     // Error handling

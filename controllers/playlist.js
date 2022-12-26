@@ -8,7 +8,11 @@ exports.createPlaylist = async (req, res) => {
 
     const playlist = await newPlaylist.save();
 
-    await User.findByIdAndUpdate(userId, { play_list: playlist?._id }, { new: true });
+    await User.findOneAndUpdate(
+      { _id: userId },
+      { $push: { play_list: playlist?._id } },
+      { new: true },
+    );
 
     res.status(200).json({ data: playlist });
   } catch (err) {
@@ -21,23 +25,25 @@ exports.updatePlayList = async (req, res) => {
     const { playlistId } = req.params;
     const { sessionId } = req.body;
 
-    const playlist = await Playlist.find({ _id: playlistId, sessions: sessionId });
+    const isSessionExist = await Playlist.find({ _id: playlistId, sessions: sessionId });
 
-    if (playlist?.length) {
-      //   const updatePlaylist = await Playlist.findOneAndUpdate(
-      //     { _id: playlistId },
-      //     {
-      //       $pull: {
-      //         sessions: sessionId,
-      //       },
-      //     },
-      //     {
-      //       new: true,
-      //     },
-      //   );
+    if (isSessionExist?.length) {
+      const updatePlaylist = await Playlist.findOneAndUpdate(
+        { _id: playlistId },
+        {
+          $pull: {
+            sessions: sessionId,
+          },
+        },
+        {
+          new: true,
+        },
+      );
 
-      //   res.status(200).json({ data: { playlist: updatePlaylist } });
-      res.status(200).json({ data: { playlist: playlist } });
+      res
+        .status(200)
+        .json({ data: { playlist: updatePlaylist }, message: 'Session removed from playlist' });
+      //   res.status(200).json({ data: { playlist: isSessionExist } });
     } else {
       const updatePlaylist = await Playlist.findOneAndUpdate(
         { _id: playlistId },
@@ -51,7 +57,10 @@ exports.updatePlayList = async (req, res) => {
         },
       );
 
-      res.status(200).json({ data: { playlist: updatePlaylist } });
+      res.status(200).json({
+        data: { playlist: updatePlaylist },
+        message: 'Session added to playlist successfully',
+      });
     }
   } catch (err) {
     res.status(500).json({ message: err.message });

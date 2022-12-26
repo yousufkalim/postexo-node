@@ -23,7 +23,7 @@ const userSchema = new Schema({
     ref: 'Session',
   },
   play_list: {
-    type: Schema.Types.ObjectId,
+    type: [Schema.Types.ObjectId],
     ref: 'Playlist',
   },
   watch_later: {
