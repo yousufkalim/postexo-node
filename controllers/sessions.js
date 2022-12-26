@@ -3,16 +3,21 @@ const User = require('../models/User');
 
 // Get ALL Sessions of a user
 exports.getAllSessions = async (req, res) => {
-  const queryParams = req.query;
+  const { durations, levels, languages } = req.query;
   try {
-    const queryFilters = { ...queryParams };
-    const allSessions = await Session.find(queryFilters)
-      .populate('comments.user')
-      .populate('ratings.user')
-      .populate('likes')
-      .populate('dislikes')
-      .populate('views');
-    res.status(200).json({ sessions: allSessions });
+    // const queryFilters = { ...queryParams };
+    if (durations?.length || levels?.length || languages?.length) {
+      // const result = await Session.find({ student_level: { $in: levels } });
+      // console.log('Result  ===========> ', result);
+    } else {
+      const allSessions = await Session.find()
+        .populate('comments.user')
+        .populate('ratings.user')
+        .populate('likes')
+        .populate('dislikes')
+        .populate('views');
+      res.status(200).json({ sessions: allSessions });
+    }
   } catch (err) {
     res.status(400).json({ message: 'Something went wrong' });
   }
@@ -167,6 +172,93 @@ exports.shareSession = async (req, res) => {
     res.status(200).json({ message: 'Comment added successfully' });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+exports.favouriteSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { userId, isFavourite } = req.body;
+
+    if (isFavourite) {
+      const updateUser = await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $addToSet: { favorites: sessionId },
+        },
+      );
+      res
+        .status(200)
+        .json({ data: { user: updateUser, message: 'Session added to my favourites list' } });
+    } else {
+      const updateUser = await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $pull: { favorites: sessionId },
+        },
+      );
+      res
+        .status(200)
+        .json({ data: { user: updateUser, message: 'Session removed from my favourites list' } });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.playlistSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { userId, add } = req.body;
+
+    if (add) {
+      const updateUser = await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $addToSet: { play_list: sessionId },
+        },
+      );
+      res.status(200).json({ data: { user: updateUser, message: 'Session added to my playlist' } });
+    } else {
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $pull: { play_list: sessionId },
+        },
+      );
+      res.status(200).json({ message: 'Session removed from my playlist' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.watchLaterSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { userId, add } = req.body;
+
+    if (add) {
+      const updateUser = await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $addToSet: { watch_later: sessionId },
+        },
+      );
+      res.status(200).json({ data: { user: updateUser, message: 'Session added to watch later' } });
+    } else {
+      const updateUser = await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          $pull: { watch_later: sessionId },
+        },
+      );
+      res
+        .status(200)
+        .json({ data: { user: updateUser, message: 'Session removed from watch later' } });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
