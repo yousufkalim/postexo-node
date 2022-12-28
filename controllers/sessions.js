@@ -1,14 +1,81 @@
+/* eslint-disable no-case-declarations */
 const Session = require('../models/Session');
 const User = require('../models/User');
 
-// Get ALL Sessions of a user
+// Get ALL Sessions of a user and Get by filters
 exports.getAllSessions = async (req, res) => {
-  const { durations, levels, languages } = req.query;
+  const { durations: allDurations, levels, languages } = req.query;
   try {
-    // const queryFilters = { ...queryParams };
-    if (durations?.length || levels?.length || languages?.length) {
-      // const result = await Session.find({ student_level: { $in: levels } });
-      // console.log('Result  ===========> ', result);
+    const allFilters = [];
+    if (allDurations?.length || levels?.length || languages?.length) {
+      if (levels?.length) {
+        const levelsArr = levels.split(',');
+        const levelsFilter = {
+          student_level: {
+            $in: levelsArr,
+          },
+        };
+        allFilters.push(levelsFilter);
+      }
+      if (allDurations?.length) {
+        const durations = allDurations.split(',');
+
+        const durationArr = [];
+        const veryshortDuration = durations.includes('Very short');
+        const shortDuration = durations.includes('Short');
+        const longDuration = durations.includes('Long');
+
+        durations?.forEach(() => {
+          if (veryshortDuration) {
+            const veryshortFilterObj = {
+              duration: {
+                $lt: 10,
+              },
+            };
+            durationArr.push(veryshortFilterObj);
+          }
+          if (shortDuration) {
+            const shortFilterObj = {
+              $and: [
+                {
+                  duration: {
+                    $gte: 10,
+                  },
+                },
+                {
+                  duration: {
+                    $lte: 15,
+                  },
+                },
+              ],
+            };
+            durationArr.push(shortFilterObj);
+          }
+          if (longDuration) {
+            const longFilterObj = {
+              duration: {
+                $gt: 15,
+              },
+            };
+            durationArr.push(longFilterObj);
+          }
+        });
+
+        const durationFilters = {
+          $or: [...durationArr],
+        };
+
+        allFilters.push(durationFilters);
+      }
+      const aggregation = [
+        {
+          $match: {
+            $and: [...allFilters],
+          },
+        },
+      ];
+      const resp = await Session.aggregate(aggregation);
+      res.status(200).json({ sessions: resp });
     } else {
       const allSessions = await Session.find()
         .populate('comments.user')
@@ -190,7 +257,7 @@ exports.favouriteSession = async (req, res) => {
       );
       res
         .status(200)
-        .json({ data: { user: updateUser, message: 'Session added to my favourites list' } });
+        .json({ data: { user: updateUser, message: 'Session removed from my favourites list' } });
     } else {
       const updateUser = await User.findOneAndUpdate(
         { _id: userId },
@@ -200,7 +267,7 @@ exports.favouriteSession = async (req, res) => {
       );
       res
         .status(200)
-        .json({ data: { user: updateUser, message: 'Session removed from my favourites list' } });
+        .json({ data: { user: updateUser, message: 'Session added to my favourites list' } });
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -237,29 +304,67 @@ exports.playlistSession = async (req, res) => {
 exports.watchLaterSession = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    const { userId, add } = req.body;
+    const { userId } = req.body;
 
-    if (add) {
-      const updateUser = await User.findOneAndUpdate(
-        { _id: userId },
-        {
-          $addToSet: { watch_later: sessionId },
-        },
-      );
-      res.status(200).json({ data: { user: updateUser, message: 'Session added to watch later' } });
-    } else {
-      const updateUser = await User.findOneAndUpdate(
-        { _id: userId },
-        {
-          $pull: { watch_later: sessionId },
-        },
-      );
-      res
-        .status(200)
-        .json({ data: { user: updateUser, message: 'Session removed from watch later' } });
-    }
+    const updateUser = await User.findOneAndUpdate(
+      { _id: userId },
+      {
+        $addToSet: { watch_later: sessionId },
+      },
+    );
+    res.status(200).json({ data: { user: updateUser, message: 'Session added to watch later' } });
+
+    // if (add) {
+    //   const updateUser = await User.findOneAndUpdate(
+    //     { _id: userId },
+    //     {
+    //       $addToSet: { watch_later: sessionId },
+    //     },
+    //   );
+    //   res.status(200).json({ data: { user: updateUser, message: 'Session added to watch later' } });
+    // } else {
+    //   const updateUser = await User.findOneAndUpdate(
+    //     { _id: userId },
+    //     {
+    //       $pull: { watch_later: sessionId },
+    //     },
+    //   );
+    //   res
+    //     .status(200)
+    //     .json({ data: { user: updateUser, message: 'Session removed from watch later' } });
+    // }
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.getSessionsByProfessor = async (req, res) => {
+  const { professorName } = req.query;
+  try {
+    const sessions = await Session.find({ professor_name: professorName });
+
+    res.status(200).json({
+      sessions,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.getSessionsByMatter = async (req, res) => {
+  const { matterName } = req.query;
+  try {
+    const sessions = await Session.find({ matter: matterName });
+
+    res.status(200).json({
+      sessions,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
