@@ -10,12 +10,16 @@ const {
   favouriteSession,
   playlistSession,
   watchLaterSession,
+  getSessionsByProfessor,
+  getSessionsByMatter,
 } = require('../controllers/sessions');
 const { checkAuth } = require('../middleware/checkAuth');
 
 const router = require('express').Router();
 
 router.get('/', getAllSessions);
+router.get('/getByProfessor', getSessionsByProfessor);
+router.get('/getByMatter', getSessionsByMatter);
 router.get('/:sessionId', checkAuth, getSessionById);
 router.post('/addComment/:sessionId', checkAuth, addCommentToSession);
 router.patch('/favourites/:sessionId', checkAuth, favouriteSession);
