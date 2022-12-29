@@ -1,79 +1,14 @@
 /* eslint-disable no-case-declarations */
 const Session = require('../models/Session');
 const User = require('../models/User');
+const { getAppliedFilters } = require('../utils/common');
 
 // Get ALL Sessions of a user and Get by filters
 exports.getAllSessions = async (req, res) => {
-  const { durations: allDurations, levels, languages } = req.query;
+  const { durations: allDurations, levels } = req.query;
   try {
-    const allFilters = [];
-    if (allDurations?.length || levels?.length || languages?.length) {
-      if (levels?.length) {
-        const levelsArr = levels.split(',');
-        const levelsFilter = {
-          student_level: {
-            $in: levelsArr,
-          },
-        };
-        allFilters.push(levelsFilter);
-      }
-      if (allDurations?.length) {
-        const durations = allDurations.split(',');
-
-        const durationArr = [];
-        const veryshortDuration = durations.includes('Very short');
-        const shortDuration = durations.includes('Short');
-        const longDuration = durations.includes('Long');
-
-        durations?.forEach(() => {
-          if (veryshortDuration) {
-            const veryshortFilterObj = {
-              duration: {
-                $lt: 10,
-              },
-            };
-            durationArr.push(veryshortFilterObj);
-          }
-          if (shortDuration) {
-            const shortFilterObj = {
-              $and: [
-                {
-                  duration: {
-                    $gte: 10,
-                  },
-                },
-                {
-                  duration: {
-                    $lte: 15,
-                  },
-                },
-              ],
-            };
-            durationArr.push(shortFilterObj);
-          }
-          if (longDuration) {
-            const longFilterObj = {
-              duration: {
-                $gt: 15,
-              },
-            };
-            durationArr.push(longFilterObj);
-          }
-        });
-
-        const durationFilters = {
-          $or: [...durationArr],
-        };
-
-        allFilters.push(durationFilters);
-      }
-      const aggregation = [
-        {
-          $match: {
-            $and: [...allFilters],
-          },
-        },
-      ];
+    if (allDurations?.length || levels?.length) {
+      const aggregation = getAppliedFilters(levels, allDurations);
       const resp = await Session.aggregate(aggregation);
       res.status(200).json({ sessions: resp });
     } else {
@@ -100,6 +35,63 @@ exports.getSessionById = async (req, res) => {
     res.status(200).json({ session: session });
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+};
+
+exports.getSessionsByProfessor = async (req, res) => {
+  const { professorName, durations: allDurations, levels } = req.query;
+  try {
+    if (allDurations?.length || levels?.length) {
+      const professorStage = {
+        $match: {
+          professor_name: professorName,
+        },
+      };
+      const aggregation = getAppliedFilters(levels, allDurations);
+      aggregation.unshift(professorStage);
+      const sessions = await Session.aggregate(aggregation);
+      res.status(200).json({
+        sessions,
+      });
+    } else {
+      const sessions = await Session.find({ professor_name: professorName });
+      res.status(200).json({
+        sessions,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.getSessionsByMatter = async (req, res) => {
+  const { matterName, durations: allDurations, levels } = req.query;
+  try {
+    if (allDurations?.length || levels?.length) {
+      const matterStage = {
+        $match: {
+          matter: matterName,
+        },
+      };
+      const aggregation = getAppliedFilters(levels, allDurations);
+      aggregation.unshift(matterStage);
+      const sessions = await Session.aggregate(aggregation);
+      res.status(200).json({
+        sessions,
+      });
+    } else {
+      const sessions = await Session.find({ matter: matterName });
+
+      res.status(200).json({
+        sessions,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
   }
 };
 
@@ -335,36 +327,6 @@ exports.watchLaterSession = async (req, res) => {
     // }
   } catch (err) {
     res.status(500).json({ message: err.message });
-  }
-};
-
-exports.getSessionsByProfessor = async (req, res) => {
-  const { professorName } = req.query;
-  try {
-    const sessions = await Session.find({ professor_name: professorName });
-
-    res.status(200).json({
-      sessions,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
-  }
-};
-
-exports.getSessionsByMatter = async (req, res) => {
-  const { matterName } = req.query;
-  try {
-    const sessions = await Session.find({ matter: matterName });
-
-    res.status(200).json({
-      sessions,
-    });
-  } catch (err) {
-    res.status(500).json({
-      message: err.message,
-    });
   }
 };
 
