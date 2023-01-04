@@ -2,14 +2,20 @@ const { Schema, model } = require('mongoose');
 
 const reportSchema = new Schema(
   {
-    reason: {
+    subject: {
       type: String,
-      required: true,
+      required: [true, 'Subject is required'],
       maxlength: 2000,
     },
     comment: {
       type: String,
       maxlength: 1028,
+    },
+    email: {
+      type: String,
+      maxlength: 128,
+      required: [true, 'Email is required'],
+      trim: true,
     },
     user: {
       type: Schema.Types.ObjectId,
