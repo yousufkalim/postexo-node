@@ -35,7 +35,7 @@ const sessionSchema = new Schema({
   twilio_audio: String,
   session_recording: String,
   fb_data: {
-    type: Object,
+    type: String,
   },
   twilio_createAt: Date,
   created_at: Date,

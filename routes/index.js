@@ -11,7 +11,7 @@ router.use('/admins', require('./admins')); // All the user routes
 router.use('/users', require('./users')); // All the user routes
 router.use('/auth', require('./auth')); // All the auth routes
 router.use('/sessions', require('./sessions')); // All Session routes
-router.use('/levels', checkAuth, require('./levels')); // All Levels routes
+router.use('/levels', require('./levels')); // All Levels routes
 router.use('/playlist', checkAuth, require('./playlist')); // All Levels routes
 router.use('/reports', checkAuth, require('./reports')); // All Report routes
 

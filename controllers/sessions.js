@@ -3,6 +3,64 @@ const Session = require('../models/Session');
 const User = require('../models/User');
 const { getAppliedFilters } = require('../utils/common');
 
+exports.createSession = async (req, res) => {
+  try {
+    const {
+      id,
+      regulier,
+      matiere,
+      subjects,
+      difficulty_level,
+      resolution_file,
+      level,
+      chapitre,
+      message,
+      duration,
+      rate,
+      fb_data,
+      professeur_name: professeurName,
+      etudiant_name: etudiantName,
+      created_at,
+      photos,
+      audio_twilio: audioTwilio,
+      recording_audio: recordingAudio,
+      created_at_from_twilio: createdAtFromTwilio,
+    } = req.body;
+    const dataToSave = {
+      session: id,
+      regular: regulier,
+      subject: subjects,
+      difficulty_level,
+      resolution_file,
+      student_level: level,
+      session_recording: recordingAudio,
+      message,
+      twilio_audio: audioTwilio,
+      created_at_from_twilio: createdAtFromTwilio,
+      photos,
+      duration,
+      fb_data,
+      rating: rate,
+      professor_name: professeurName,
+      student_name: etudiantName,
+      matter: matiere,
+      chapters: chapitre,
+      created_at,
+    };
+    const findSession = await Session.findOne({ session: id });
+    if (findSession) {
+      await Session.findOneAndUpdate({ session: id }, dataToSave, { new: true });
+      res.status(200).json({ message: 'Session updated successfully' });
+    } else {
+      const newSession = new Session(dataToSave);
+      await newSession.save();
+      res.status(200).json({ data: newSession, message: 'Session created successfully' });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Get ALL Sessions of a user and Get by filters
 exports.getAllSessions = async (req, res) => {
   const { durations: allDurations, levels } = req.query;
