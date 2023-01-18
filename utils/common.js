@@ -61,6 +61,9 @@ const getAppliedFilters = (levels, allDurations) => {
   }
   const aggregation = [
     {
+      $addFields: {
+        fb_data: 0,
+      },
       $match: {
         $and: [...allFilters],
       },

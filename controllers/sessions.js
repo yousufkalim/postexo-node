@@ -71,6 +71,7 @@ exports.getAllSessions = async (req, res) => {
       res.status(200).json({ sessions: resp });
     } else {
       const allSessions = await Session.find()
+        .select('-fb_data')
         .populate('comments.user')
         .populate('ratings.user')
         .populate('likes')
@@ -112,7 +113,13 @@ exports.getSessionsByProfessor = async (req, res) => {
         sessions,
       });
     } else {
-      const sessions = await Session.find({ professor_name: professorName });
+      const sessions = await Session.find({ professor_name: professorName })
+        .select('-fb_data')
+        .populate('comments.user')
+        .populate('ratings.user')
+        .populate('likes')
+        .populate('dislikes')
+        .populate('views');
       res.status(200).json({
         sessions,
       });
@@ -140,7 +147,13 @@ exports.getSessionsByMatter = async (req, res) => {
         sessions,
       });
     } else {
-      const sessions = await Session.find({ matter: matterName });
+      const sessions = await Session.find({ matter: matterName })
+        .select('-fb_data')
+        .populate('comments.user')
+        .populate('ratings.user')
+        .populate('likes')
+        .populate('dislikes')
+        .populate('views');
 
       res.status(200).json({
         sessions,
