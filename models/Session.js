@@ -17,7 +17,7 @@ const sessionSchema = new Schema({
   },
   resolution_file: String,
   duration: {
-    type: Number,
+    type: String,
     required: true,
   },
   student_level: String,
