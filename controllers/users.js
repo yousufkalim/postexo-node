@@ -64,7 +64,7 @@ exports.getById = async (req, res) => {
     const user = await Users.findById(userId)
       .populate('favorites')
       .populate('play_list')
-      .populate('watch_later'); // Finding user by id
+      .populate('watch_later');
     res.json({ success: true, user }); // Success
   } catch (err) {
     // Error handling
