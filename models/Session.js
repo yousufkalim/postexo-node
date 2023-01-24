@@ -78,7 +78,10 @@ const sessionSchema = new Schema({
       },
     },
   ],
-  averageRating: Number,
+  averageRating: {
+    type: Number,
+    default: 0,
+  },
   created_at_from_twilio: Date,
 });
 

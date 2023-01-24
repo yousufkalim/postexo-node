@@ -1,4 +1,6 @@
 /* eslint-disable no-case-declarations */
+const { default: mongoose } = require('mongoose');
+const Playlist = require('../models/Playlist');
 const Session = require('../models/Session');
 const User = require('../models/User');
 const { getAppliedFilters } = require('../utils/common');
@@ -157,6 +159,126 @@ exports.getSessionsByMatter = async (req, res) => {
 
       res.status(200).json({
         sessions,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.getSessionsByPlaylist = async (req, res) => {
+  const { durations: allDurations, levels } = req.query;
+  const { id } = req.params;
+  try {
+    if (allDurations?.length || levels?.length) {
+      const aggregation = getAppliedFilters(levels, allDurations);
+      const matterStage = [
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(id),
+          },
+        },
+        {
+          $lookup: {
+            from: 'sessions',
+            localField: 'sessions',
+            foreignField: '_id',
+            as: 'sessions',
+            pipeline: aggregation,
+          },
+        },
+      ];
+      // aggregation.unshift(matterStage);
+      const sessions = await Playlist.aggregate(matterStage);
+      res.status(200).json({
+        playlist: sessions?.[0],
+      });
+    } else {
+      const playlist = await Playlist.findById(id).populate('sessions');
+      res.status(200).json({
+        playlist,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.getFavouriteSessionsOfUser = async (req, res) => {
+  const { durations: allDurations, levels } = req.query;
+  const { userId } = req.params;
+  try {
+    if (allDurations?.length || levels?.length) {
+      const aggregation = getAppliedFilters(levels, allDurations);
+      const matterStage = [
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(userId),
+          },
+        },
+        {
+          $lookup: {
+            from: 'sessions',
+            localField: 'favorites',
+            foreignField: '_id',
+            as: 'favourites',
+            pipeline: aggregation,
+          },
+        },
+      ];
+      // aggregation.unshift(matterStage);
+      const sessions = await User.aggregate(matterStage);
+      res.status(200).json({
+        user: sessions?.[0],
+      });
+    } else {
+      const user = await User.findById(userId).populate('favorites');
+      res.status(200).json({
+        user,
+      });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: err.message,
+    });
+  }
+};
+
+exports.getWatchLaterSessionsOfUser = async (req, res) => {
+  const { durations: allDurations, levels } = req.query;
+  const { userId } = req.params;
+  try {
+    if (allDurations?.length || levels?.length) {
+      const aggregation = getAppliedFilters(levels, allDurations);
+      const matterStage = [
+        {
+          $match: {
+            _id: mongoose.Types.ObjectId(userId),
+          },
+        },
+        {
+          $lookup: {
+            from: 'sessions',
+            localField: 'watch_later',
+            foreignField: '_id',
+            as: 'watch_later',
+            pipeline: aggregation,
+          },
+        },
+      ];
+      // aggregation.unshift(matterStage);
+      const sessions = await User.aggregate(matterStage);
+      res.status(200).json({
+        user: sessions?.[0],
+      });
+    } else {
+      const user = await User.findById(userId).populate('watch_later');
+      res.status(200).json({
+        user,
       });
     }
   } catch (err) {
