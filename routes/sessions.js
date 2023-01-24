@@ -13,6 +13,9 @@ const {
   getSessionsByProfessor,
   getSessionsByMatter,
   createSession,
+  getSessionsByPlaylist,
+  getFavouriteSessionsOfUser,
+  getWatchLaterSessionsOfUser,
 } = require('../controllers/sessions');
 const { checkAuth } = require('../middleware/checkAuth');
 const { webhookCheckAuth } = require('../middleware/webhookCheckAuth');
@@ -22,6 +25,9 @@ const router = require('express').Router();
 router.get('/', getAllSessions);
 router.post('/', webhookCheckAuth, createSession);
 router.get('/getByProfessor', checkAuth, getSessionsByProfessor);
+router.get('/getFavouriteSessions/:userId', checkAuth, getFavouriteSessionsOfUser);
+router.get('/getWatchLaterSessions/:userId', checkAuth, getWatchLaterSessionsOfUser);
+router.get('/getByPlaylist/:id', checkAuth, getSessionsByPlaylist);
 router.get('/getByMatter', checkAuth, getSessionsByMatter);
 router.get('/:sessionId', checkAuth, getSessionById);
 router.post('/addComment/:sessionId', checkAuth, addCommentToSession);
