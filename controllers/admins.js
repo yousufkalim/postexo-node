@@ -53,7 +53,6 @@ exports.login = async (req, res) => {
   try {
     // Getting email and password
     const { email, password } = req.body;
-
     // Getting user from db
     let admin = await Admins.findOne({ email });
 
