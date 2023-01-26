@@ -10,7 +10,7 @@ const cors = require('cors');
 module.exports = (app) => {
   app.use(
     cors({
-      origin: process.env.NODE_ENV === 'prod' ? process.env.ORIGIN : true,
+      origin: true,
       credentials: true,
     }),
   ); // CORS (Cross Origin Policy) to restrict unknown requests
